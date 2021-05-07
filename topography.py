@@ -142,6 +142,8 @@ def osm_slopes():
 
 def osm_speeds_bike():
 
+    # bike speeds by slope function (still needs to be updated)
+
     def bike_speeds(slope):
 
         if slope > 0 and slope <= 0.015:
@@ -188,14 +190,3 @@ def osm_speeds_bike():
     df.to_csv("slopes/osm_speeds_bike.csv", index = False, header = False)
 
 osm_speeds_bike()
-
-
-# CASE WHEN @ slope > 0 AND @ slope <= 1.5 THEN 15
-# WHEN slope > 1.5 AND slope <= 3 THEN 15/1.1
-# WHEN slope > 3 AND slope <= 6 THEN 15/1.25
-# WHEN slope > 6 AND slope <= 12 THEN 15/1.5
-# WHEN slope < -1.5 AND slope >= -3 THEN 15/0.8
-# WHEN slope < -3 AND slope >= -6 THEN 15/0.9
-# WHEN slope < -6 AND slope >= -12 THEN 15/1.3
-# WHEN @ slope > 12 THEN 15/2
-# ELSE 15 END);
