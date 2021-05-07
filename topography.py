@@ -79,6 +79,7 @@ def osm_node_elevations(j = 0):
         print("------------------------")
 
 
+
 # estimating slopes for edges in OSM based on the node elevations computed in the previous function
 def osm_slopes():
 
@@ -127,13 +128,74 @@ def osm_slopes():
     df = df[["i","j","length", "i_elev","j_elev"]]
 
 
-    # computuing slope
+    # computing slope
 
     df["slope"] = (df["j_elev"] - df["i_elev"]) / df["length"]
 
     df = df[["i","j","slope"]]
 
-    df.to_csv("slopes/osm_slopes.csv")
+    df.to_csv("slopes/osm_slopes.csv", index = False)
 
 
-osm_slopes()
+
+
+
+def osm_speeds_bike():
+
+    def bike_speeds(slope):
+
+        if slope > 0 and slope <= 0.015:
+            speed = 15
+
+        elif slope > 0.015 and slope <= 0.03:
+            speed = 15 / 1.1
+
+        elif slope > 0.03 and slope <= 0.06:
+            speed = 15 / 1.25
+
+        elif slope > 0.06 and slope <= 0.12:
+            speed = 15 / 1.5
+
+        elif slope > 0.12:
+            speed = 15 / 2
+
+        elif slope < 0 and slope >= -0.015:
+            speed = 15 / 0.8
+
+        elif slope < -0.015 and slope >= -0.03:
+            speed = 15 / 0.8
+
+        elif slope < -0.03 and slope >= -0.06:
+            speed = 15 / 0.9
+
+        elif slope < -0.06 and slope >= -0.12:
+            speed = 15 / 1.3
+
+        elif slope < -0.12:
+            speed = 15 / 0.5
+
+        else:
+            speed = 15
+
+        return speed
+
+    df = pd.read_csv("slopes/osm_slopes.csv")
+
+    df["speed"] = df.slope.apply(bike_speeds)
+
+    del df["slope"]
+
+    df.to_csv("slopes/osm_speeds_bike.csv", index = False, header = False)
+
+osm_speeds_bike()
+
+
+# CASE WHEN @ slope > 0 AND @ slope <= 1.5 THEN 15
+# WHEN slope > 1.5 AND slope <= 3 THEN 15/1.1
+# WHEN slope > 3 AND slope <= 6 THEN 15/1.25
+# WHEN slope > 6 AND slope <= 12 THEN 15/1.5
+# WHEN slope < -1.5 AND slope >= -3 THEN 15/0.8
+# WHEN slope < -3 AND slope >= -6 THEN 15/0.9
+# WHEN slope < -6 AND slope >= -12 THEN 15/1.3
+# WHEN @ slope > 12 THEN 15/2
+# ELSE 15 END);
