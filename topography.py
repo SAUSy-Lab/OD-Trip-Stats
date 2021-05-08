@@ -93,16 +93,13 @@ def osm_slopes():
 
     nodes, edges = osm.get_network(nodes=True, network_type="walking")
 
-    edges1 = edges[['u','v','length']]
+    edges1 = edges[['u','v','length','highway',"bridge","tunnel"]]
     edges1.rename(columns = {'u':'i', 'v':'j'}, inplace = True)
 
-    edges2 = edges[['v','u','length']]
+    edges2 = edges[['v','u','length','highway',"bridge","tunnel"]]
     edges2.rename(columns = {'v':'i', 'u':'j'}, inplace = True)
 
     df = pd.concat([edges1, edges2 ], axis=0)
-
-    print(edges)
-    print(list(edges.columns))
 
     del edges, edges1, edges2
 
@@ -125,18 +122,20 @@ def osm_slopes():
     df = df.merge(dfe, how="left", left_on='j', right_on="id")
     df.rename(columns = {'elev':'j_elev'}, inplace = True)
 
-    df = df[["i","j","length", "i_elev","j_elev"]]
+    df = df[["i","j","length", "i_elev","j_elev","highway","bridge","tunnel"]]
 
 
     # computing slope
 
     df["slope"] = (df["j_elev"] - df["i_elev"]) / df["length"]
 
+    df.loc[df.bridge == "yes", 'slope'] = 0
+    df.loc[df.tunnel == "yes", 'slope'] = 0
+    df.loc[df.highway == "steps", 'slope'] = 9999
+
     df = df[["i","j","slope"]]
 
     df.to_csv("slopes/osm_slopes.csv", index = False)
-
-
 
 
 
@@ -162,16 +161,16 @@ def osm_speeds_bike():
             speed = 15 / 2
 
         elif slope < 0 and slope >= -0.015:
-            speed = 15 / 0.8
+            speed = 15 / 0.95
 
         elif slope < -0.015 and slope >= -0.03:
-            speed = 15 / 0.8
+            speed = 15
 
         elif slope < -0.03 and slope >= -0.06:
             speed = 15 / 0.9
 
         elif slope < -0.06 and slope >= -0.12:
-            speed = 15 / 1.3
+            speed = 15 / 0.75
 
         elif slope < -0.12:
             speed = 15 / 0.5
@@ -181,11 +180,19 @@ def osm_speeds_bike():
 
         return speed
 
+
+    # load in the slopes and compute speed
+
     df = pd.read_csv("slopes/osm_slopes.csv")
 
     df["speed"] = df.slope.apply(bike_speeds)
 
+    # steps to 2km/hr
+    df.loc[df.slope == 9999, 'speed'] = 2
+
     del df["slope"]
+
+    df["speed"] = df["speed"].astype(int)
 
     df.to_csv("slopes/osm_speeds_bike.csv", index = False, header = False)
 
