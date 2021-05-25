@@ -8,16 +8,13 @@ from trips import osrm_trip
 
 
 # joining in XY coords (based on geog - "ct" or "da") and mode (Walk, Drive, Bicycle)
-def trip_stats_tts(geog, mode):
-
+def trip_stats_tts(geog, mode, out_name):
 
     # load in survey data
     df = pd.read_csv("survey_data/od_for_export.csv", dtype = str)
     df = df[df["mode"] == mode]
 
-
     # add in CT ids, if looking at CT
-    print(df)
     if geog == "ct":
         dact = pd.read_csv("coordinates/da_ct_2016_link.csv", dtype = "str")
         df = df.merge(dact, how="left", left_on='orig_loc', right_on="dauid")
@@ -28,7 +25,7 @@ def trip_stats_tts(geog, mode):
         df.ctuid = df.ctuid.fillna(df['dest_loc'])
         df.dest_loc = df.ctuid
         del df["ctuid"], df["dauid"]
-        print(df)
+
 
 
     # load in coords, and reduce columns
@@ -52,15 +49,18 @@ def trip_stats_tts(geog, mode):
     df = df[df["orig_loc"] != df["dest_loc"]]
 
 
+
     # loop over trips, computing stats for each
-    out = [["tid","duration","distance"]]
+    out = []
 
     # compute self potential trips here
 
 
 
+
     # home to other
     dfho = df[(df["orig_type"] == "Home") & (df["dest_type"] == "Other")]
+
     dfho = dfho.merge(xyhome, how="left", left_on='orig_loc', right_on="id")
     dfho = dfho.rename(columns={"X": "Xi", "Y": "Yi"})
     del dfho["id"]
@@ -68,33 +68,40 @@ def trip_stats_tts(geog, mode):
     dfho = dfho.rename(columns={"X": "Xj", "Y": "Yj"})
     dfho = dfho[["tid","Xi","Yi","Xj","Yj"]]
 
-    print(dfho)
-
     for index, row in dfho.iterrows():
-        print(row["tid"])
         duration, distance = osrm_trip(row["tid"],row["Xi"],row["Yi"],row["Xj"],row["Yj"],"walking")
         out.append([row["tid"], duration, distance])
 
 
+    # other to Home
+    dfoh = df[(df["orig_type"] == "Other") & (df["dest_type"] == "Home")]
+    dfoh = dfoh.merge(xyhome, how="left", left_on='orig_loc', right_on="id")
+    dfoh = dfoh.rename(columns={"X": "Xi", "Y": "Yi"})
+    del dfoh["id"]
+    dfoh = dfoh.merge(xyother, how="left", left_on='dest_loc', right_on="id")
+    dfoh = dfoh.rename(columns={"X": "Xj", "Y": "Yj"})
+    dfoh = dfoh[["tid","Xi","Yi","Xj","Yj"]]
 
-
-
-    # # other to Home
-    # dfoh = df[(df["orig_type"] == "Other") & (df["dest_type"] == "Home")]
-    #
-    # # other to other
-    # dfoo = df[(df["orig_type"] == "Other") & (df["dest_type"] == "Other")]
-
-
-
-    # other to home
+    for index, row in dfoh.iterrows():
+        duration, distance = osrm_trip(row["tid"],row["Xi"],row["Yi"],row["Xj"],row["Yj"],"walking")
+        out.append([row["tid"], duration, distance])
 
 
     # other to other
+    dfoo = df[(df["orig_type"] == "Other") & (df["dest_type"] == "Other")]
+    dfoo = dfoo.merge(xyhome, how="left", left_on='orig_loc', right_on="id")
+    dfoo = dfoo.rename(columns={"X": "Xi", "Y": "Yi"})
+    del dfoo["id"]
+    dfoo = dfoo.merge(xyother, how="left", left_on='dest_loc', right_on="id")
+    dfoo = dfoo.rename(columns={"X": "Xj", "Y": "Yj"})
+    dfoo = dfoo[["tid","Xi","Yi","Xj","Yj"]]
+
+    for index, row in dfoo.iterrows():
+        duration, distance = osrm_trip(row["tid"],row["Xi"],row["Yi"],row["Xj"],row["Yj"],"walking")
+        out.append([row["tid"], duration, distance])
+
+    out = pd.DataFrame(out, columns = ["tid","duration","distance"])
+    out.to_csv("survey_data/" + out_name, index = False)
 
 
-    # home to home
-
-
-
-trip_stats_tts("ct","Drive")
+trip_stats_tts("ct","Bicycle","trips_bike_osrm_flat.csv")

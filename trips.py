@@ -50,6 +50,8 @@ def osrm_trip_geojson(id,x1,y1,x2,y2,mode):
 
 
 
+
+
 # osrm_trip(1,-79.24610,43.82540,-79.93925,43.53418,"drive")
 
 # g = osrm_trip_geojson(1,-79.87554,43.24455,-79.34372,43.71603,"bike")
