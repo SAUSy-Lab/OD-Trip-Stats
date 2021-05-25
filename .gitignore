@@ -6,3 +6,4 @@ walk/
 slopes/
 temp/
 survey_data/
+__pycache__
