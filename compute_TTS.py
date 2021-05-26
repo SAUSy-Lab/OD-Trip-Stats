@@ -56,7 +56,7 @@ def trip_stats_tts(geog, mode, out_name):
     # compute self potential trips here
 
 
-
+    i = 0
 
     # home to other
     dfho = df[(df["orig_type"] == "Home") & (df["dest_type"] == "Other")]
@@ -71,6 +71,8 @@ def trip_stats_tts(geog, mode, out_name):
     for index, row in dfho.iterrows():
         duration, distance = osrm_trip(row["tid"],row["Xi"],row["Yi"],row["Xj"],row["Yj"],"walking")
         out.append([row["tid"], duration, distance])
+        i += 1
+        print(i)
 
 
     # other to Home
@@ -85,6 +87,8 @@ def trip_stats_tts(geog, mode, out_name):
     for index, row in dfoh.iterrows():
         duration, distance = osrm_trip(row["tid"],row["Xi"],row["Yi"],row["Xj"],row["Yj"],"walking")
         out.append([row["tid"], duration, distance])
+        i += 1
+        print(i)
 
 
     # other to other
@@ -99,9 +103,12 @@ def trip_stats_tts(geog, mode, out_name):
     for index, row in dfoo.iterrows():
         duration, distance = osrm_trip(row["tid"],row["Xi"],row["Yi"],row["Xj"],row["Yj"],"walking")
         out.append([row["tid"], duration, distance])
+        i += 1
+        print(i)
 
     out = pd.DataFrame(out, columns = ["tid","duration","distance"])
     out.to_csv("survey_data/" + out_name, index = False)
 
 
-trip_stats_tts("ct","Bicycle","trips_bike_osrm_flat.csv")
+# (based on geog - "ct" or "da") and mode (Walk, Drive, Bicycle)
+trip_stats_tts("ct","Walk","trips_walk_osrm_flat.csv")
