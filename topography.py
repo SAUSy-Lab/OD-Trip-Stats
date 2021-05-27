@@ -6,6 +6,7 @@ import json
 import time
 import csv
 import os
+import math
 
 
 # function for getting elevation of coords from geogratis API
@@ -15,6 +16,56 @@ def get_elevation(X,Y):
     page = requests.get(url,params = payload)
     elev = json.loads(page.content)
     return elev["altitude"]
+
+
+# based on toblers hiking function
+def walk_speeds_tobler(slope):
+
+    speed = 6 * math.exp(-3.5 * abs(slope + 0.05))
+
+    return speed
+
+
+# bike speeds by slope function (still needs to be updated)
+def bike_speeds(slope):
+
+    # uphill
+    if slope > 0 and slope <= 0.015:
+        speed = 15
+
+    elif slope > 0.015 and slope <= 0.03:
+        speed = 15 / 1.1
+
+    elif slope > 0.03 and slope <= 0.06:
+        speed = 15 / 1.25
+
+    elif slope > 0.06 and slope <= 0.12:
+        speed = 15 / 1.5
+
+    elif slope > 0.12:
+        speed = 15 / 2
+
+    # downhill
+    elif slope < 0 and slope >= -0.015:
+        speed = 15
+
+    elif slope < -0.015 and slope >= -0.03:
+        speed = 15 / 0.8
+
+    elif slope < -0.03 and slope >= -0.06:
+        speed = 15 / 0.9
+
+    elif slope < -0.06 and slope >= -0.12:
+        speed = 15 / 1.3
+
+    elif slope < -0.12:
+        speed = 15 / 2
+
+    # flat i.e. slope = 0
+    else:
+        speed = 15
+
+    return speed
 
 
 # looping over every node in the OSM, getting the get_elevation
@@ -141,46 +192,6 @@ def osm_slopes():
 
 def osm_speeds_bike():
 
-    # bike speeds by slope function (still needs to be updated)
-
-    def bike_speeds(slope):
-
-        if slope > 0 and slope <= 0.015:
-            speed = 15
-
-        elif slope > 0.015 and slope <= 0.03:
-            speed = 15 / 1.1
-
-        elif slope > 0.03 and slope <= 0.06:
-            speed = 15 / 1.25
-
-        elif slope > 0.06 and slope <= 0.12:
-            speed = 15 / 1.5
-
-        elif slope > 0.12:
-            speed = 15 / 2
-
-        elif slope < 0 and slope >= -0.015:
-            speed = 15 / 0.95
-
-        elif slope < -0.015 and slope >= -0.03:
-            speed = 15
-
-        elif slope < -0.03 and slope >= -0.06:
-            speed = 15 / 0.9
-
-        elif slope < -0.06 and slope >= -0.12:
-            speed = 15 / 0.75
-
-        elif slope < -0.12:
-            speed = 15 / 0.5
-
-        else:
-            speed = 15
-
-        return speed
-
-
     # load in the slopes and compute speed
 
     df = pd.read_csv("slopes/osm_slopes.csv")
@@ -196,4 +207,21 @@ def osm_speeds_bike():
 
     df.to_csv("slopes/osm_speeds_bike.csv", index = False, header = False)
 
-osm_speeds_bike()
+
+# osm_speeds_bike()
+
+
+
+def osm_speeds_walk():
+
+    None
+
+
+
+
+
+
+
+
+
+#
