@@ -5,6 +5,7 @@ import requests
 import time
 import pandas as pd
 from trips import osrm_trip
+from trips import intrazonal
 
 
 # joining in XY coords (based on geog - "ct" or "da") and mode (Walk, Drive, Bicycle)
@@ -133,13 +134,23 @@ def trips_intrazonal_tts(geog, mode, out_name):
     dfself = df[df["orig_loc"] == df["dest_loc"]]
     df = df[df["orig_loc"] != df["dest_loc"]]
 
+
     # get appropriate areas of zones
-    if geog == "ct":
-        dfa = pd.read_csv("coordinates", dtype = "str")
+    dfa = pd.read_csv("coordinates/" + geog + "_2016_area.csv", dtype = "str")
 
 
-    # merge
-    dfself.merge(dfa, how="left", left_on)
+    # merge with the survey data
+    dfself = dfself.merge(dfa, how="left", left_on="orig_loc", right_on = "id")
+
+    # compute intrazonal times
+    dfself["area_km"] = dfself["area_km"].astype(float)
+    dfself['intrazonals'] = dfself.apply(lambda x: intrazonal(x['area_km'], mode), axis=1)
+    dfself[['duration','distance']] = pd.DataFrame(dfself['intrazonals'].tolist(), index=dfself.index)
+
+    # output appropriate columns
+    dfself = dfself[["tid","duration","distance"]]
+
+    dfself.to_csv("survey_data/" + out_name, index = False)
 
 
 
@@ -147,4 +158,4 @@ def trips_intrazonal_tts(geog, mode, out_name):
 # trip_stats_tts("da","Walk","trips_walk_da_osrm_flat.csv")
 
 
-trips_intrazonal_tts("ct","Walk","trips_walk_da_intrazonal.csv")
+trips_intrazonal_tts("da","Walk","trips_walk_da_intrazonal.csv")
