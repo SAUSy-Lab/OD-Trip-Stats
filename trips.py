@@ -1,9 +1,34 @@
 import requests
 import json
+import math
+
+
+def intrazonal(area, mode):
+    distance = math.sqrt(area / math.pi)
+
+    if mode == "Walk":
+        speed = 5
+    elif mode == "Bicycle":
+        speed = 15
+    elif mode == "Drive":
+        speed = 50
+    elif mode == "Transit":
+        speed = 5
+    else:
+        return -1,-1
+
+    duration = distance / speed
+
+    distance = 1000* distance # from km to m
+    duration = duration * 60 * 60 # from hr to sec
+
+    return duration, distance
+
+
+
+
 
 def osrm_trip(id,x1,y1,x2,y2,mode):
-
-
 
     route_url = "http://127.0.0.1:5000/route/v1/" + mode + "/" + str(x1) + "," + str(y1) + ";" + str(x2) + "," + str(y2) + "?steps=false&geometries=geojson&overview=false"
 
