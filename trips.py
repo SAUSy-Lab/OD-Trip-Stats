@@ -1,5 +1,31 @@
 import requests
 import json
+import math
+
+
+def intrazonal(area, mode):
+    distance = math.sqrt(area / math.pi)
+
+    if mode == "Walk":
+        speed = 5
+    elif mode == "Bicycle":
+        speed = 15
+    elif mode == "Drive":
+        speed = 50
+    elif mode == "Transit":
+        speed = 5
+    else:
+        return -1,-1
+
+    duration = distance / speed
+
+    distance = 1000* distance # from km to m
+    duration = duration * 60 * 60 # from hr to sec
+
+    return duration, distance
+
+
+
 
 
 def osrm_trip(id,x1,y1,x2,y2,mode):
@@ -8,12 +34,22 @@ def osrm_trip(id,x1,y1,x2,y2,mode):
 
     print(route_url)
 
-    page = requests.get(route_url)
 
-    route = json.loads(page.content)
+    try:
 
-    duration = route['routes'][0]['legs'][0]["duration"]
-    distance = route['routes'][0]['legs'][0]["distance"]
+        page = requests.get(route_url, verify=False, timeout=2)
+
+        route = json.loads(page.content)
+
+        duration = route['routes'][0]['legs'][0]["duration"]
+        distance = route['routes'][0]['legs'][0]["distance"]
+
+    except:
+
+        distance = -1
+        duration = -1
+
+    print(distance, duration)
 
     return duration, distance
 

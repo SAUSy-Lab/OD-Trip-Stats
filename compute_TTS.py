@@ -56,7 +56,7 @@ def trip_stats_tts(geog, mode, out_name):
     # compute self potential trips here
 
 
-
+    i = 0
 
     # home to other
     dfho = df[(df["orig_type"] == "Home") & (df["dest_type"] == "Other")]
@@ -71,6 +71,8 @@ def trip_stats_tts(geog, mode, out_name):
     for index, row in dfho.iterrows():
         duration, distance = osrm_trip(row["tid"],row["Xi"],row["Yi"],row["Xj"],row["Yj"],"walking")
         out.append([row["tid"], duration, distance])
+        i += 1
+        print(i)
 
 
     # other to Home
@@ -85,6 +87,8 @@ def trip_stats_tts(geog, mode, out_name):
     for index, row in dfoh.iterrows():
         duration, distance = osrm_trip(row["tid"],row["Xi"],row["Yi"],row["Xj"],row["Yj"],"walking")
         out.append([row["tid"], duration, distance])
+        i += 1
+        print(i)
 
 
     # other to other
@@ -99,9 +103,48 @@ def trip_stats_tts(geog, mode, out_name):
     for index, row in dfoo.iterrows():
         duration, distance = osrm_trip(row["tid"],row["Xi"],row["Yi"],row["Xj"],row["Yj"],"walking")
         out.append([row["tid"], duration, distance])
+        i += 1
+        print(i)
 
     out = pd.DataFrame(out, columns = ["tid","duration","distance"])
     out.to_csv("survey_data/" + out_name, index = False)
 
 
-trip_stats_tts("ct","Bicycle","trips_bike_osrm_flat.csv")
+
+def trips_intrazonal_tts(geog, mode, out_name):
+
+    # load in survey data
+    df = pd.read_csv("survey_data/od_for_export.csv", dtype = str)
+    df = df[df["mode"] == mode]
+
+    # add in CT ids, if looking at CT
+    if geog == "ct":
+        dact = pd.read_csv("coordinates/da_ct_2016_link.csv", dtype = "str")
+        df = df.merge(dact, how="left", left_on='orig_loc', right_on="dauid")
+        df.ctuid = df.ctuid.fillna(df['orig_loc'])
+        df.orig_loc = df.ctuid
+        del df["ctuid"], df["dauid"]
+        df = df.merge(dact, how="left", left_on='dest_loc', right_on="dauid")
+        df.ctuid = df.ctuid.fillna(df['dest_loc'])
+        df.dest_loc = df.ctuid
+        del df["ctuid"], df["dauid"]
+
+    # seperating self trips (i = j) and non-self (i != j)
+    dfself = df[df["orig_loc"] == df["dest_loc"]]
+    df = df[df["orig_loc"] != df["dest_loc"]]
+
+    # get appropriate areas of zones
+    if geog == "ct":
+        dfa = pd.read_csv("coordinates", dtype = "str")
+
+
+    # merge
+    dfself.merge(dfa, how="left", left_on)
+
+
+
+# (based on geog - "ct" or "da") and mode (Walk, Drive, Bicycle)
+# trip_stats_tts("da","Walk","trips_walk_da_osrm_flat.csv")
+
+
+trips_intrazonal_tts("ct","Walk","trips_walk_da_intrazonal.csv")
