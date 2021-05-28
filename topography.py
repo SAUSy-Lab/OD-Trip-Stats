@@ -33,6 +33,7 @@ def bike_speeds(slope):
     if slope > 0 and slope <= 0.015:
         speed = 15
 
+
     elif slope > 0.015 and slope <= 0.03:
         speed = 15 / 1.1
 
@@ -203,18 +204,38 @@ def osm_speeds_bike():
 
     del df["slope"]
 
+    print(df)
+
     df["speed"] = df["speed"].astype(int)
 
     df.to_csv("slopes/osm_speeds_bike.csv", index = False, header = False)
 
 
-# osm_speeds_bike()
 
 
 
 def osm_speeds_walk():
 
-    None
+    df = pd.read_csv("slopes/osm_slopes.csv")
+
+    print(df)
+    print(df.slope.max())
+    print(df.slope.min())
+
+    df["speed"] = df.slope.apply(walk_speeds_tobler)
+
+    # steps to 2km/hr
+    df.loc[df.slope == 9999, 'speed'] = 2.4
+
+    del df["slope"]
+
+    df["speed"] = df["speed"].astype(int)
+
+    df.to_csv("slopes/osm_speeds_walk.csv", index = False, header = False)
+
+
+# osm_speeds_bike()
+osm_speeds_walk()
 
 
 
