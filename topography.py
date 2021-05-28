@@ -191,6 +191,7 @@ def osm_slopes():
 
 
 
+# getting bike speeds for all edges in OSM based on slope
 def osm_speeds_bike():
 
     # load in the slopes and compute speed
@@ -212,20 +213,21 @@ def osm_speeds_bike():
 
 
 
-
-
+# getting walk speeds for all edges in OSM based on slope
 def osm_speeds_walk():
 
     df = pd.read_csv("slopes/osm_slopes.csv")
-
-    print(df)
-    print(df.slope.max())
-    print(df.slope.min())
 
     df["speed"] = df.slope.apply(walk_speeds_tobler)
 
     # steps to 2km/hr
     df.loc[df.slope == 9999, 'speed'] = 2.4
+
+    # anything super steep to 1
+    df.loc[df.speed < 1, 'speed'] = 1
+
+    # NAs to flat
+    df.speed = df.speed.fillna(5)
 
     del df["slope"]
 
@@ -235,7 +237,7 @@ def osm_speeds_walk():
 
 
 # osm_speeds_bike()
-osm_speeds_walk()
+# osm_speeds_walk()
 
 
 
