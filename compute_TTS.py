@@ -49,14 +49,28 @@ def trip_stats_tts(geog, mode, out_name):
     dfself = df[df["orig_loc"] == df["dest_loc"]]
     df = df[df["orig_loc"] != df["dest_loc"]]
 
+    print(df)
+    print(dfself)
+
+
+
+    # compute self potential trips here
+    dfa = pd.read_csv("coordinates/" + geog + "_2016_area.csv", dtype = "str")
+
+    # merge with the survey data
+    dfself = dfself.merge(dfa, how="left", left_on="orig_loc", right_on = "id")
+
+    # compute intrazonal times
+    dfself["area_km"] = dfself["area_km"].astype(float)
+    dfself['intrazonals'] = dfself.apply(lambda x: intrazonal(x['area_km'], mode), axis=1)
+    dfself[['duration','distance']] = pd.DataFrame(dfself['intrazonals'].tolist(), index=dfself.index)
+
+    # output appropriate columns
+    dfself = dfself[["tid","duration","distance"]]
 
 
     # loop over trips, computing stats for each
     out = []
-
-    # compute self potential trips here
-
-
     i = 0
 
     # home to other
@@ -108,6 +122,12 @@ def trip_stats_tts(geog, mode, out_name):
         print(i)
 
     out = pd.DataFrame(out, columns = ["tid","duration","distance"])
+
+    out = pd.concat([dfself,out])
+
+    out["duration"] = out["duration"].astype(int)
+    out["distance"] = out["distance"].astype(int)
+
     out.to_csv("survey_data/" + out_name, index = False)
 
 
@@ -117,6 +137,7 @@ def trips_intrazonal_tts(geog, mode, out_name):
     # load in survey data
     df = pd.read_csv("survey_data/od_for_export.csv", dtype = str)
     df = df[df["mode"] == mode]
+
 
     # add in CT ids, if looking at CT
     if geog == "ct":
@@ -135,9 +156,10 @@ def trips_intrazonal_tts(geog, mode, out_name):
     df = df[df["orig_loc"] != df["dest_loc"]]
 
 
+
+
     # get appropriate areas of zones
     dfa = pd.read_csv("coordinates/" + geog + "_2016_area.csv", dtype = "str")
-
 
     # merge with the survey data
     dfself = dfself.merge(dfa, how="left", left_on="orig_loc", right_on = "id")
@@ -155,7 +177,7 @@ def trips_intrazonal_tts(geog, mode, out_name):
 
 
 # (based on geog - "ct" or "da") and mode (Walk, Drive, Bicycle)
-# trip_stats_tts("da","Walk","trips_walk_da_osrm_flat.csv")
+trip_stats_tts("ct","Walk","trips_walk_ct_osrm_elev.csv")
 
 
-trips_intrazonal_tts("da","Walk","trips_walk_da_intrazonal.csv")
+# trips_intrazonal_tts("ct","Bicycle","trips_bike_ct_intrazonal.csv")
