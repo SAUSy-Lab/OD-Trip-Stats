@@ -30,6 +30,6 @@ osrm-extract drive/gtha_2017.osm.xml -p drive/car.lua
 
 rm drive/gtha_2017_car.osm.xml
 
-osrm-contract drive/gtha_2017_car.osrm
+osrm-contract drive/gtha_2017.osrm
 
-osrm-routed drive/gtha_2017_car.osrm
+osrm-routed drive/gtha_2017.osrm

@@ -177,7 +177,7 @@ def trips_intrazonal_tts(geog, mode, out_name):
 
 
 # (based on geog - "ct" or "da") and mode (Walk, Drive, Bicycle)
-trip_stats_tts("ct","Walk","trips_walk_ct_osrm_elev.csv")
+trip_stats_tts("da","Drive","trips_drive_da_osrm_free.csv")
 
 
 # trips_intrazonal_tts("ct","Bicycle","trips_bike_ct_intrazonal.csv")
