@@ -172,7 +172,43 @@ def trips_intrazonal_tts(geog, mode, out_name):
     # output appropriate columns
     dfself = dfself[["tid","duration","distance"]]
 
-    dfself.to_csv("survey_data/" + out_name, index = False)
+    dfself.to_csv("survey_data/" + out_name + '.csv', index = False)
+
+
+
+
+def auto_gdb_to_csv(table_name, gdb_path, output_path, input_fields=None):
+
+    """
+    Taking the big auto travel time tables and saving as csv files
+
+    Adapted from here https://gist.github.com/d-wasserman/e9c98be1d0caebc2935afecf0ba239a0 - Thank you!
+
+    Function will convert an arcgis table into a pandas dataframe with an object ID index, and the selected
+    input fields using an arcpy.da.SearchCursor.
+    """
+
+    in_table = gdb_path + table_name
+
+    OIDFieldName = arcpy.Describe(in_table).OIDFieldName
+    if input_fields:
+        final_fields = [OIDFieldName] + input_fields
+    else:
+        final_fields = [field.name for field in arcpy.ListFields(in_table)]
+    data = [row for row in arcpy.da.SearchCursor(in_table, final_fields)]
+    fc_dataframe = pd.DataFrame(data, columns=final_fields)
+    fc_dataframe = fc_dataframe.set_index(OIDFieldName, drop=True)
+
+    fc_dataframe.Total_Distance = fc_dataframe.Total_Distance.astype(int)
+    fc_dataframe.Total_Time = fc_dataframe.Total_Time.astype(int)
+
+    fc_dataframe.to_csv(output_path + table_name)
+
+#
+
+time_period = "free"
+for table in ['ct_other_other_','ct_other_home_','ct_home_other_','da_other_other_','da_other_home_','da_home_other_']:
+    auto_gdb_to_csv(table + time_period,'C://Users//jamaps//Documents//phac//phac1//phac1.gdb//','C://Users//jamaps//Documents//phac//out_matrices_tor//',['OriginName','DestinationName','Total_Distance','Total_Time'])
 
 
 
