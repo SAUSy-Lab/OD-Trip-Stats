@@ -197,16 +197,16 @@ def auto_gdb_to_csv(table_name, gdb_path, output_path, input_fields=None):
         final_fields = [field.name for field in arcpy.ListFields(in_table)]
     data = [row for row in arcpy.da.SearchCursor(in_table, final_fields)]
     fc_dataframe = pd.DataFrame(data, columns=final_fields)
+    del data
     fc_dataframe = fc_dataframe.set_index(OIDFieldName, drop=True)
 
     fc_dataframe.Total_Distance = fc_dataframe.Total_Distance.astype(int)
     fc_dataframe.Total_Time = fc_dataframe.Total_Time.astype(int)
 
-    fc_dataframe.to_csv(output_path + table_name)
+    fc_dataframe.to_csv(output_path + table_name + ".csv")
 
-#
-
-time_period = "free"
+# running the above
+time_period = "8am"
 for table in ['ct_other_other_','ct_other_home_','ct_home_other_','da_other_other_','da_other_home_','da_home_other_']:
     auto_gdb_to_csv(table + time_period,'C://Users//jamaps//Documents//phac//phac1//phac1.gdb//','C://Users//jamaps//Documents//phac//out_matrices_tor//',['OriginName','DestinationName','Total_Distance','Total_Time'])
 
