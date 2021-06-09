@@ -203,13 +203,98 @@ def auto_gdb_to_csv(table_name, gdb_path, output_path, input_fields=None):
     fc_dataframe.Total_Distance = fc_dataframe.Total_Distance.astype(int)
     fc_dataframe.Total_Time = fc_dataframe.Total_Time.astype(int)
 
-    fc_dataframe.to_csv(output_path + table_name + ".csv")
+    fc_dataframe.to_csv(output_path + table_name + ".csv", index = False)
 
-# running the above
-time_period = "8am"
-for table in ['ct_other_other_','ct_other_home_','ct_home_other_','da_other_other_','da_other_home_','da_home_other_']:
-    auto_gdb_to_csv(table + time_period,'C://Users//jamaps//Documents//phac//phac1//phac1.gdb//','C://Users//jamaps//Documents//phac//out_matrices_tor//',['OriginName','DestinationName','Total_Distance','Total_Time'])
+# # e.g. running the above
+# for table in ['ct_other_other_','ct_other_home_','ct_home_other_','da_other_other_','da_other_home_','da_home_other_']:
+#    auto_gdb_to_csv(table + time_period,'C://Users//jamaps//Documents//phac//phac1//phac1.gdb//','C://Users//jamaps//Documents//phac//out_matrices_tor//',['OriginName','DestinationName','Total_Distance','Total_Time'])
 
+
+
+
+# mode can be "time" or "free"
+def auto_csv_to_trips(geog, mode, in_path, out_name):
+
+    df = pd.read_csv("survey_data/od_for_export.csv", dtype = str)
+    df = df[df["mode"] == "Drive"]
+
+    print(df)
+
+    # add in CT ids, if looking at CT
+    if geog == "ct":
+        dact = pd.read_csv("coordinates/da_ct_2016_link.csv", dtype = "str")
+        df = df.merge(dact, how="left", left_on='orig_loc', right_on="dauid")
+        df.ctuid = df.ctuid.fillna(df['orig_loc'])
+        df.orig_loc = df.ctuid
+        del df["ctuid"], df["dauid"]
+        df = df.merge(dact, how="left", left_on='dest_loc', right_on="dauid")
+        df.ctuid = df.ctuid.fillna(df['dest_loc'])
+        df.dest_loc = df.ctuid
+        del df["ctuid"], df["dauid"]
+
+
+    # seperating self trips (i = j) and non-self (i != j)
+    dfself = df[df["orig_loc"] == df["dest_loc"]]
+    df = df[df["orig_loc"] != df["dest_loc"]]
+
+
+    # compute self potential trips here
+    dfa = pd.read_csv("coordinates/" + geog + "_2016_area.csv", dtype = "str")
+
+    # merge with the survey data
+    dfself = dfself.merge(dfa, how="left", left_on="orig_loc", right_on = "id")
+
+    # compute intrazonal times
+    dfself["area_km"] = dfself["area_km"].astype(float)
+
+    dfself['intrazonals'] = dfself.apply(lambda x: intrazonal(x['area_km'], "Drive"), axis=1)
+    dfself[['duration','distance']] = pd.DataFrame(dfself['intrazonals'].tolist(), index=dfself.index)
+
+    # output appropriate columns
+    dfself = dfself[["tid","duration","distance"]]
+
+    # for just free flow times
+    if mode == "free":
+
+        # home to other
+        dft = pd.read_csv(in_path + geog + "_home_other_free.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfho = df[(df["orig_type"] == "Home") & (df["dest_type"] == "Other")]
+
+        dfho = dfho.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfho = dfho.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfho = dfho[["tid","duration","distance"]]
+
+        # other to other
+        dft = pd.read_csv(in_path + geog + "_other_other_free.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfoo = df[(df["orig_type"] == "Other") & (df["dest_type"] == "Other")]
+
+        dfoo = dfoo.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfoo = dfoo.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfoo = dfoo[["tid","duration","distance"]]
+
+        # other to home
+        dft = pd.read_csv(in_path + geog + "_other_home_free.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfoh = df[(df["orig_type"] == "Other") & (df["dest_type"] == "Home")]
+
+        dfoh = dfoh.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfoh = dfoh.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfoh = dfoh[["tid","duration","distance"]]
+
+
+        out = pd.concat([dfself,dfho,dfoo,dfoh])
+        out = out.fillna(-1)
+        out["duration"] = out["duration"].astype(int)
+        out["distance"] = out["distance"].astype(int)
+
+        out.to_csv("survey_data/" + out_name, index = False)
+
+        print(out)
+
+# # e.g. run with
+# auto_csv_to_trips("da","free",'out_matrices_tor/',"trips_drive_da_esri_free.csv")
 
 
 # (based on geog - "ct" or "da") and mode (Walk, Drive, Bicycle)
