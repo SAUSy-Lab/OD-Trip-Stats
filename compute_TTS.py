@@ -131,6 +131,9 @@ def trip_stats_tts(geog, mode, out_name):
     out.to_csv("survey_data/" + out_name, index = False)
 
 
+# # (based on geog - "ct" or "da") and mode (Walk, Drive, Bicycle)
+# trip_stats_tts("da","Drive","trips_drive_da_osrm_free.csv")
+
 
 def trips_intrazonal_tts(geog, mode, out_name):
 
@@ -173,6 +176,9 @@ def trips_intrazonal_tts(geog, mode, out_name):
     dfself = dfself[["tid","duration","distance"]]
 
     dfself.to_csv("survey_data/" + out_name + '.csv', index = False)
+
+# trips_intrazonal_tts("ct","Bicycle","trips_bike_ct_intrazonal.csv")
+
 
 
 
@@ -293,12 +299,63 @@ def auto_csv_to_trips(geog, mode, in_path, out_name):
 
         print(out)
 
+
 # # e.g. run with
 # auto_csv_to_trips("da","free",'out_matrices_tor/',"trips_drive_da_esri_free.csv")
 
 
-# (based on geog - "ct" or "da") and mode (Walk, Drive, Bicycle)
-trip_stats_tts("da","Drive","trips_drive_da_osrm_free.csv")
 
 
-# trips_intrazonal_tts("ct","Bicycle","trips_bike_ct_intrazonal.csv")
+
+def concat_trips():
+
+    df = pd.read_csv("survey_data/od_for_export.csv")
+
+    df.has_data = 0
+
+
+    # joining in the Bike data
+    bike_trips = ["bike_ct_osrm_elev","bike_ct_osrm_flat","bike_da_osrm_elev","bike_da_osrm_flat"]
+
+    for trip in bike_trips:
+        matrix_name = "survey_data/trips_" + trip + ".csv"
+        dft = pd.read_csv(matrix_name)
+        df = df.merge(dft, how = "left", left_on = "tid", right_on = "tid")
+        df.loc[df['duration'] > 0, 'has_data'] = 1
+        df = df.rename(columns={
+            "distance": trip + "_distance",
+            "duration": trip + "_duration"
+            })
+
+
+    # joining in the Walk data
+    walk_trips = ["walk_ct_osrm_elev","walk_ct_osrm_flat","walk_da_osrm_elev","walk_da_osrm_flat"]
+
+    for trip in walk_trips:
+        matrix_name = "survey_data/trips_" + trip + ".csv"
+        dft = pd.read_csv(matrix_name)
+        df = df.merge(dft, how = "left", left_on = "tid", right_on = "tid")
+        df.loc[df['duration'] > 0, 'has_data'] = 1
+        df = df.rename(columns={
+            "distance": trip + "_distance",
+            "duration": trip + "_duration"
+            })
+
+    # joining in the Walk data
+    car_trips = ["drive_ct_osrm_free","drive_da_osrm_free"]
+
+    for trip in car_trips:
+        matrix_name = "survey_data/trips_" + trip + ".csv"
+        dft = pd.read_csv(matrix_name)
+        df = df.merge(dft, how = "left", left_on = "tid", right_on = "tid")
+        df.loc[df['duration'] > 0, 'has_data'] = 1
+        df = df.rename(columns={
+            "distance": trip + "_distance",
+            "duration": trip + "_duration"
+            })
+
+    df.to_csv("survey_data/od_with_ddinfo.csv", index = False)
+
+
+
+concat_trips()
