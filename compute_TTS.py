@@ -218,13 +218,13 @@ def auto_gdb_to_csv(table_name, gdb_path, output_path, input_fields=None):
 
 
 
-# mode can be "time" or "free"
 def auto_csv_to_trips(geog, mode, in_path, out_name):
 
     df = pd.read_csv("survey_data/od_for_export.csv", dtype = str)
     df = df[df["mode"] == "Drive"]
 
     print(df)
+
 
     # add in CT ids, if looking at CT
     if geog == "ct":
@@ -258,6 +258,8 @@ def auto_csv_to_trips(geog, mode, in_path, out_name):
 
     # output appropriate columns
     dfself = dfself[["tid","duration","distance"]]
+
+
 
     # for just free flow times
     if mode == "free":
@@ -300,8 +302,125 @@ def auto_csv_to_trips(geog, mode, in_path, out_name):
         print(out)
 
 
-# # e.g. run with
-# auto_csv_to_trips("da","free",'out_matrices_tor/',"trips_drive_da_esri_free.csv")
+    # congested travel times
+    else:
+
+        df["start_hour"] = df["start_hour"].astype(float)
+
+        # home to other
+        dfho = df[(df["orig_type"] == "Home") & (df["dest_type"] == "Other")]
+
+        dfho_8am = dfho[(dfho["start_hour"] >= 6) & (dfho["start_hour"] < 9)]
+        dft = pd.read_csv(in_path + geog + "_home_other_8am.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfho_8am = dfho_8am.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfho_8am = dfho_8am.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfho_8am = dfho_8am[["tid","duration","distance"]]
+
+        dfho_12pm = dfho[(dfho["start_hour"] >= 9) & (dfho["start_hour"] < 15)]
+        dft = pd.read_csv(in_path + geog + "_home_other_12pm.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfho_12pm = dfho_12pm.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfho_12pm = dfho_12pm.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfho_12pm = dfho_12pm[["tid","duration","distance"]]
+
+        dfho_5pm = dfho[(dfho["start_hour"] >= 15) & (dfho["start_hour"] < 19)]
+        dft = pd.read_csv(in_path + geog + "_home_other_5pm.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfho_5pm = dfho_5pm.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfho_5pm = dfho_5pm.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfho_5pm = dfho_5pm[["tid","duration","distance"]]
+
+        dfho_11pm = dfho[(dfho["start_hour"] >= 19) | (dfho["start_hour"] < 6)]
+        dft = pd.read_csv(in_path + geog + "_home_other_11pm.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfho_11pm = dfho_11pm.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfho_11pm = dfho_11pm.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfho_11pm = dfho_11pm[["tid","duration","distance"]]
+
+
+        # other other
+        dfoo = df[(df["orig_type"] == "Other") & (df["dest_type"] == "Other")]
+
+        dfoo_8am = dfoo[(dfoo["start_hour"] >= 6) & (dfoo["start_hour"] < 9)]
+        dft = pd.read_csv(in_path + geog + "_other_other_8am.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfoo_8am = dfoo_8am.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfoo_8am = dfoo_8am.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfoo_8am = dfoo_8am[["tid","duration","distance"]]
+
+        dfoo_12pm = dfoo[(dfoo["start_hour"] >= 9) & (dfoo["start_hour"] < 15)]
+        dft = pd.read_csv(in_path + geog + "_other_other_12pm.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfoo_12pm = dfoo_12pm.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfoo_12pm = dfoo_12pm.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfoo_12pm = dfoo_12pm[["tid","duration","distance"]]
+
+        dfoo_5pm = dfoo[(dfoo["start_hour"] >= 15) & (dfoo["start_hour"] < 19)]
+        dft = pd.read_csv(in_path + geog + "_other_other_5pm.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfoo_5pm = dfoo_5pm.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfoo_5pm = dfoo_5pm.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfoo_5pm = dfoo_5pm[["tid","duration","distance"]]
+
+        dfoo_11pm = dfoo[(dfoo["start_hour"] >= 19) | (dfoo["start_hour"] < 6)]
+        dft = pd.read_csv(in_path + geog + "_other_other_11pm.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfoo_11pm = dfoo_11pm.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfoo_11pm = dfoo_11pm.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfoo_11pm = dfoo_11pm[["tid","duration","distance"]]
+
+        # other home
+        dfoh = df[(df["orig_type"] == "Other") & (df["dest_type"] == "Home")]
+
+        dfoh_8am = dfoh[(dfoh["start_hour"] >= 6) & (dfoh["start_hour"] < 9)]
+        dft = pd.read_csv(in_path + geog + "_other_home_8am.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfoh_8am = dfoh_8am.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfoh_8am = dfoh_8am.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfoh_8am = dfoh_8am[["tid","duration","distance"]]
+
+        dfoh_12pm = dfoh[(dfoh["start_hour"] >= 9) & (dfoh["start_hour"] < 15)]
+        dft = pd.read_csv(in_path + geog + "_other_home_12pm.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfoh_12pm = dfoh_12pm.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfoh_12pm = dfoh_12pm.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfoh_12pm = dfoh_12pm[["tid","duration","distance"]]
+
+        dfoh_5pm = dfoh[(dfoh["start_hour"] >= 15) & (dfoh["start_hour"] < 19)]
+        dft = pd.read_csv(in_path + geog + "_other_home_5pm.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfoh_5pm = dfoh_5pm.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfoh_5pm = dfoh_5pm.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfoh_5pm = dfoh_5pm[["tid","duration","distance"]]
+
+        dfoh_11pm = dfoh[(dfoh["start_hour"] >= 19) | (dfoh["start_hour"] < 6)]
+        dft = pd.read_csv(in_path + geog + "_other_home_11pm.csv", dtype = "str")
+        dft = dft.rename(columns={"OriginName": "orig_loc", "DestinationName": "dest_loc"})
+        dfoh_11pm = dfoh_11pm.merge(dft, how = "left", left_on=['orig_loc','dest_loc'], right_on = ['orig_loc','dest_loc'])
+        dfoh_11pm = dfoh_11pm.rename(columns={"Total_Distance": "distance", "Total_Time": "duration"})
+        dfoh_11pm = dfoh_11pm[["tid","duration","distance"]]
+
+
+        out = pd.concat([dfself,dfoh_8am,dfoh_12pm,dfoh_5pm,dfoh_11pm,dfoo_8am,dfoo_12pm,dfoo_5pm,dfoo_11pm, dfho_8am,dfho_12pm,dfho_5pm,dfho_11pm])
+
+
+
+        out = out.fillna(-1)
+        out["duration"] = out["duration"].astype(int)
+        out["distance"] = out["distance"].astype(int)
+
+
+        print(out)
+
+        out.to_csv("survey_data/" + out_name, index = False)
+
+
+
+# # run with
+# auto_csv_to_trips("da","cong",'out_matrices_tor/',"trips_drive_da_esri_cong.csv")
+
+
 
 
 
@@ -355,7 +474,6 @@ def concat_trips():
             })
 
     df.to_csv("survey_data/od_with_ddinfo.csv", index = False)
-
 
 
 concat_trips()
