@@ -461,7 +461,7 @@ def concat_trips():
             })
 
     # joining in the Walk data
-    car_trips = ["drive_ct_osrm_free","drive_da_osrm_free"]
+    car_trips = ["drive_ct_osrm_free","drive_da_osrm_free","drive_ct_esri_free","drive_da_esri_free","drive_ct_esri_cong","drive_da_esri_cong"]
 
     for trip in car_trips:
         matrix_name = "survey_data/trips_" + trip + ".csv"
